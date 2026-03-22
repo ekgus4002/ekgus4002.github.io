@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>독도 지킴이 방탈출 게임</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom, #87CEEB, #ffffff);
+      padding: 20px;
+    }
+    .stage {
+      display: none;
+    }
+    .active {
+      display: block;
+    }
+    input {
+      padding: 10px;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🏝️ 독도 지킴이 방탈출 게임</h1>
+<p>퀴즈를 풀고 비밀번호를 입력하여 다음 단계로 이동하세요!</p>
+
+<!-- Stage 1 -->
+<div id="stage1" class="stage active">
+  <h2>1단계</h2>
+  <p>독도는 어느 나라의 영토일까요?</p>
+  <input id="answer1" placeholder="정답 입력">
+  <br>
+  <button onclick="checkAnswer(1)">확인</button>
+  <button onclick="hint(1)">힌트</button>
+</div>
+
+<!-- Stage 2 -->
+<div id="stage2" class="stage">
+  <h2>2단계</h2>
+  <p>독도를 지킨 대표적인 인물은 누구일까요?</p>
+  <input id="answer2" placeholder="정답 입력">
+  <br>
+  <button onclick="checkAnswer(2)">확인</button>
+  <button onclick="hint(2)">힌트</button>
+</div>
+
+<!-- Stage 3 -->
+<div id="stage3" class="stage">
+  <h2>3단계</h2>
+  <p>독도는 몇 개의 큰 섬으로 이루어져 있을까요?</p>
+  <input id="answer3" placeholder="숫자 입력">
+  <br>
+  <button onclick="checkAnswer(3)">확인</button>
+  <button onclick="hint(3)">힌트</button>
+</div>
+
+<script>
+const answers = {
+  1: "대한민국",
+  2: "안용복",
+  3: "2"
+};
+
+function checkAnswer(stage) {
+  const input = document.getElementById("answer" + stage).value.trim();
+
+  if (input === answers[stage]) {
+    Swal.fire("정답! 🎉", "다음 단계로 이동합니다!", "success");
+    document.getElementById("stage" + stage).classList.remove("active");
+
+    if (stage < 3) {
+      document.getElementById("stage" + (stage + 1)).classList.add("active");
+    } else {
+      showCertificate();
+    }
+  } else {
+    Swal.fire("틀렸어요 😢", "다시 생각해보세요!", "error");
+  }
+}
+
+function hint(stage) {
+  let hints = {
+    1: "한반도가 속한 나라입니다.",
+    2: "조선 시대 인물로 일본에 가서 독도가 우리 땅임을 알렸어요.",
+    3: "동도와 서도로 이루어져 있어요."
+  };
+
+  Swal.fire("힌트 💡", hints[stage], "info");
+}
+
+function showCertificate() {
+  Swal.fire({
+    title: "🎓 수료증 획득!",
+    html: `
+      <div style="border:3px solid #000;padding:20px;">
+        <h2>독도 지킴이 수료증</h2>
+        <p>이 학생은 독도 역사 퀴즈를 모두 통과하였습니다.</p>
+        <p><strong>축하합니다! 🎉</strong></p>
+      </div>
+    `,
+    confirmButtonText: "다시 하기"
+  }).then(() => location.reload());
+}
+</script>
+
+</body>
+</html>
