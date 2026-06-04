@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>등식의 성질 탐구 (양팔 저울)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen flex flex-col items-center py-8">
+
+    <div class="max-w-4xl w-full px-4 flex flex-col gap-6">
+        
+        <!-- 헤더 및 설명 -->
+        <header class="text-center">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">등식의 성질 탐구하기</h1>
+            <p class="text-slate-600">양변에 같은 처리를 하여 미지수의 값을 찾아보세요.</p>
+        </header>
+
+        <!-- 수식 디스플레이 (칠판 느낌) -->
+        <div class="bg-slate-800 rounded-xl shadow-inner p-6 flex flex-col items-center justify-center relative overflow-x-auto">
+            <div class="text-4xl md:text-5xl font-mono text-white flex items-center gap-6 tracking-wider whitespace-nowrap min-w-max">
+                <span id="expr-left" class="flex-1 text-right"></span>
+                <span id="expr-sign" class="w-12 text-center transition-colors duration-300"></span>
+                <span id="expr-right" class="flex-1 text-left"></span>
+            </div>
+            
+            <div id="solved-badge" class="hidden absolute top-2 right-4 flex items-center gap-1 text-green-400 bg-slate-900/50 px-3 py-1 rounded-full text-sm animate-pulse">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                해결 완료!
+            </div>
+        </div>
+
+        <!-- 저울 시각화 영역 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 pt-16 flex flex-col items-center justify-end h-80 relative overflow-hidden">
+            
+            <!-- 저울 기둥 -->
+            <div class="w-4 h-48 bg-slate-700 rounded-t-full relative z-10 mx-auto shadow-md">
+                <!-- 중앙 핀 연결부 -->
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-slate-800 z-30"></div>
+                <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-slate-300 z-40 shadow-inner"></div>
+            </div>
+            
+            <!-- 저울 받침대 -->
+            <div class="w-48 h-6 bg-slate-800 rounded-t-xl absolute bottom-0 z-10 shadow-lg"></div>
+
+            <!-- 회전하는 가로 막대와 접시들 -->
+            <div id="scale-beam" class="absolute bottom-[11rem] w-[28rem] h-3 transition-transform duration-700 ease-in-out origin-center z-20">
+                <!-- 가로 막대 -->
+                <div class="w-full h-full bg-slate-600 rounded-full shadow-md"></div>
+                
+                <!-- 왼쪽 접시 세트 -->
+                <div class="absolute top-0 left-2 -translate-x-1/2 flex flex-col items-center">
+                    <!-- 실 -->
+                    <div class="w-1 h-24 bg-slate-400 shadow-sm"></div>
+                    <!-- 접시판 -->
+                    <div id="left-pan" class="w-40 h-3 bg-slate-700 rounded-full relative flex justify-center items-end pb-3 transition-transform duration-700 ease-in-out shadow-lg">
+                        <div id="left-items" class="flex flex-wrap-reverse justify-center items-end gap-1 w-36 pb-1"></div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽 접시 세트 -->
+                <div class="absolute top-0 right-2 translate-x-1/2 flex flex-col items-center">
+                    <!-- 실 -->
+                    <div class="w-1 h-24 bg-slate-400 shadow-sm"></div>
+                    <!-- 접시판 -->
+                    <div id="right-pan" class="w-40 h-3 bg-slate-700 rounded-full relative flex justify-center items-end pb-3 transition-transform duration-700 ease-in-out shadow-lg">
+                        <div id="right-items" class="flex flex-wrap-reverse justify-center items-end gap-1 w-36 pb-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 조작 패널 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- 좌변 조작 -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="text-center font-semibold text-slate-700 mb-4 pb-2 border-b">좌변 조작</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="handleUpdateSide('left', 'circle', 1)" class="btn-base bg-green-50 text-green-700 hover:bg-green-100">+ ●</button>
+                    <button onclick="handleUpdateSide('left', 'circle', -1)" class="btn-base bg-red-50 text-red-700 hover:bg-red-100">- ●</button>
+                    <button onclick="handleUpdateSide('left', 'triangle', 1)" class="btn-base bg-amber-50 text-amber-700 hover:bg-amber-100">+ ▲</button>
+                    <button onclick="handleUpdateSide('left', 'triangle', -1)" class="btn-base bg-red-50 text-red-700 hover:bg-red-100">- ▲</button>
+                    <button onclick="handleUpdateSide('left', 'square', 1)" class="btn-base bg-blue-50 text-blue-700 hover:bg-blue-100">+ ■</button>
+                    <button onclick="handleUpdateSide('left', 'square', -1)" class="btn-base bg-red-50 text-red-700 hover:bg-red-100">- ■</button>
+                </div>
+            </div>
+
+            <!-- 등식의 성질 조작 (양변 동시) -->
+            <div class="bg-indigo-50 p-5 rounded-xl border border-indigo-200 shadow-sm ring-2 ring-indigo-500/20 relative">
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">등식의 성질 적용</div>
+                <h3 class="text-center font-bold text-indigo-800 mb-4 pb-2 border-b border-indigo-200">양변에 똑같이</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="handleApplyBoth('circle', 1)" class="btn-base bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">+ ●</button>
+                    <button onclick="handleApplyBoth('circle', -1)" class="btn-base bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">- ●</button>
+                    <button onclick="handleApplyBoth('triangle', 1)" class="btn-base bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">+ ▲</button>
+                    <button onclick="handleApplyBoth('triangle', -1)" class="btn-base bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">- ▲</button>
+                    <button onclick="handleApplyBoth('square', 1)" class="btn-base bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">+ ■</button>
+                    <button onclick="handleApplyBoth('square', -1)" class="btn-base bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">- ■</button>
+                    <button onclick="handleMultiplyBoth(2)" class="btn-base bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">× 2 하기</button>
+                    <button id="btn-divide" onclick="handleDivideBoth(2)" class="btn-base bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">÷ 2 하기</button>
+                </div>
+            </div>
+
+            <!-- 우변 조작 -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="text-center font-semibold text-slate-700 mb-4 pb-2 border-b">우변 조작</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="handleUpdateSide('right', 'circle', 1)" class="btn-base bg-green-50 text-green-700 hover:bg-green-100">+ ●</button>
+                    <button onclick="handleUpdateSide('right', 'circle', -1)" class="btn-base bg-red-50 text-red-700 hover:bg-red-100">- ●</button>
+                    <button onclick="handleUpdateSide('right', 'triangle', 1)" class="btn-base bg-amber-50 text-amber-700 hover:bg-amber-100">+ ▲</button>
+                    <button onclick="handleUpdateSide('right', 'triangle', -1)" class="btn-base bg-red-50 text-red-700 hover:bg-red-100">- ▲</button>
+                    <button onclick="handleUpdateSide('right', 'square', 1)" class="btn-base bg-blue-50 text-blue-700 hover:bg-blue-100">+ ■</button>
+                    <button onclick="handleUpdateSide('right', 'square', -1)" class="btn-base bg-red-50 text-red-700 hover:bg-red-100">- ■</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 프리셋 문제 선택기 -->
+        <div class="mt-4 flex flex-wrap justify-center items-center gap-3">
+            <span class="text-slate-500 font-medium mr-2 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                문제 선택:
+            </span>
+            <button onclick="handleLoadPreset(1)" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium transition-colors">1■ + 2● = 5●</button>
+            <button onclick="handleLoadPreset(2)" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium transition-colors">2■ = 1■ + 3●</button>
+            <button onclick="handleLoadPreset(3)" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium transition-colors">2■ + 1● = 1■ + 4●</button>
+            <button onclick="handleLoadPreset(4)" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium transition-colors">1▲ + 3● = 5●</button>
+        </div>
+
+    </div>
+
+    <style>
+        .btn-base {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            font-weight: 500;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .btn-base:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+    </style>
+
+    <script>
+        // 상태 관리
+        let leftState = { circle: 2, triangle: 0, square: 1 };
+        let rightState = { circle: 5, triangle: 0, square: 0 };
+        
+        const weights = { circle: 1, triangle: 2, square: 3 };
+        const MAX_ITEMS = 15;
+        const SHAPE_ORDER = ['square', 'triangle', 'circle'];
+
+        // DOM 요소 캐싱
+        const elLeftExpr = document.getElementById('expr-left');
+        const elRightExpr = document.getElementById('expr-right');
+        const elSign = document.getElementById('expr-sign');
+        const elSolvedBadge = document.getElementById('solved-badge');
+        const elScaleBeam = document.getElementById('scale-beam');
+        const elLeftPan = document.getElementById('left-pan');
+        const elRightPan = document.getElementById('right-pan');
+        const elLeftItems = document.getElementById('left-items');
+        const elRightItems = document.getElementById('right-items');
+        const btnDivide = document.getElementById('btn-divide');
+
+        // 상태 업데이트 및 렌더링 함수
+        function updateUI() {
+            // 1. 수식 포맷팅
+            elLeftExpr.textContent = formatExpression(leftState);
+            elRightExpr.textContent = formatExpression(rightState);
+
+            // 2. 저울 상태 계산
+            const leftTotal = leftState.circle * weights.circle + leftState.triangle * weights.triangle + leftState.square * weights.square;
+            const rightTotal = rightState.circle * weights.circle + rightState.triangle * weights.triangle + rightState.square * weights.square;
+            const diff = rightTotal - leftTotal;
+            const angle = Math.max(-25, Math.min(25, diff * 3));
+            const isBalanced = diff === 0;
+
+            // 3. 기호 업데이트
+            elSign.textContent = isBalanced ? "=" : (diff > 0 ? "<" : ">");
+            if (isBalanced) {
+                elSign.classList.add('text-green-400', 'font-bold');
+                elSign.classList.remove('text-red-400');
+            } else {
+                elSign.classList.add('text-red-400');
+                elSign.classList.remove('text-green-400', 'font-bold');
+            }
+
+            // 4. 방정식 해결 여부
+            const isSolved = isBalanced && (checkSolvedFor('square') || checkSolvedFor('triangle'));
+            if (isSolved) {
+                elSolvedBadge.classList.remove('hidden');
+                elSolvedBadge.classList.add('flex');
+            } else {
+                elSolvedBadge.classList.add('hidden');
+                elSolvedBadge.classList.remove('flex');
+            }
+
+            // 5. 저울 애니메이션 적용
+            elScaleBeam.style.transform = `rotate(${angle}deg)`;
+            elLeftPan.style.transform = `rotate(${-angle}deg)`;
+            elRightPan.style.transform = `rotate(${-angle}deg)`;
+
+            // 6. 도형 렌더링
+            renderItems(elLeftItems, leftState);
+            renderItems(elRightItems, rightState);
+
+            // 7. 나누기 2 버튼 상태 업데이트
+            const canDivideBy2 = 
+                SHAPE_ORDER.every(k => leftState[k] % 2 === 0 && rightState[k] % 2 === 0) &&
+                Object.values(leftState).concat(Object.values(rightState)).some(v => v !== 0);
+            
+            btnDivide.disabled = !canDivideBy2;
+        }
+
+        // 수식 문자열 생성기
+        function formatExpression(sideObj) {
+            let parts = [];
+            const orderInfo = [
+                { key: 'square', symbol: '■' },
+                { key: 'triangle', symbol: '▲' },
+                { key: 'circle', symbol: '●' }
+            ];
+
+            orderInfo.forEach(({ key, symbol }) => {
+                const val = sideObj[key];
+                if (val !== 0) {
+                    if (parts.length === 0) {
+                        parts.push(`${val < 0 ? '-' : ''}${Math.abs(val)}${symbol}`);
+                    } else {
+                        parts.push(`${val > 0 ? '+' : '-'} ${Math.abs(val)}${symbol}`);
+                    }
+                }
+            });
+            
+            return parts.length === 0 ? "0" : parts.join(" ");
+        }
+
+        // 해결 상태 확인기
+        function checkSolvedFor(target) {
+            const others = SHAPE_ORDER.filter(k => k !== target && k !== 'circle');
+            const leftHasTarget = leftState[target] === 1 && others.every(k => leftState[k] === 0) && leftState.circle === 0;
+            const rightIsConst = rightState[target] === 0 && others.every(k => rightState[k] === 0);
+            const rightHasTarget = rightState[target] === 1 && others.every(k => rightState[k] === 0) && rightState.circle === 0;
+            const leftIsConst = leftState[target] === 0 && others.every(k => leftState[k] === 0);
+            
+            return (leftHasTarget && rightIsConst) || (rightHasTarget && leftIsConst);
+        }
+
+        // 도형 HTML 생성기
+        function getShapeHTML(type, isNegative) {
+            if (type === 'circle') {
+                const classes = isNegative ? 'border-2 border-dashed border-emerald-500 bg-transparent' : 'bg-emerald-500 shadow-md';
+                return `<div class="w-6 h-6 rounded-full transition-all ${classes}"></div>`;
+            }
+            if (type === 'triangle') {
+                const svgContent = isNegative 
+                    ? `<polygon points="16,2 2,30 30,30" fill="transparent" stroke="#f59e0b" stroke-width="3" stroke-dasharray="4" />`
+                    : `<polygon points="16,2 2,30 30,30" fill="#f59e0b" class="drop-shadow-md" />`;
+                return `<svg width="28" height="28" viewBox="0 0 32 32" class="overflow-visible">${svgContent}</svg>`;
+            }
+            if (type === 'square') {
+                const classes = isNegative ? 'border-2 border-dashed border-blue-500 bg-transparent' : 'bg-blue-500 shadow-md';
+                return `<div class="w-8 h-8 rounded transition-all ${classes}"></div>`;
+            }
+            return '';
+        }
+
+        // 접시 위에 도형 렌더링
+        function renderItems(container, sideObj) {
+            let html = '';
+            SHAPE_ORDER.forEach(type => {
+                const count = Math.abs(sideObj[type]);
+                const isNegative = sideObj[type] < 0;
+                for (let i = 0; i < count; i++) {
+                    html += `<div class="flex-shrink-0">${getShapeHTML(type, isNegative)}</div>`;
+                }
+            });
+            container.innerHTML = html;
+        }
+
+        // --- 핸들러 함수들 --- //
+
+        function handleUpdateSide(side, type, amount) {
+            const target = side === 'left' ? leftState : rightState;
+            const newVal = target[type] + amount;
+            if (Math.abs(newVal) <= MAX_ITEMS) {
+                target[type] = newVal;
+                updateUI();
+            }
+        }
+
+        function handleApplyBoth(type, amount) {
+            const newLeftVal = leftState[type] + amount;
+            const newRightVal = rightState[type] + amount;
+            
+            if (Math.abs(newLeftVal) <= MAX_ITEMS && Math.abs(newRightVal) <= MAX_ITEMS) {
+                leftState[type] = newLeftVal;
+                rightState[type] = newRightVal;
+                updateUI();
+            }
+        }
+
+        function handleMultiplyBoth(factor) {
+            for (let k of SHAPE_ORDER) {
+                if (Math.abs(leftState[k] * factor) > MAX_ITEMS || Math.abs(rightState[k] * factor) > MAX_ITEMS) return;
+            }
+            SHAPE_ORDER.forEach(k => {
+                leftState[k] *= factor;
+                rightState[k] *= factor;
+            });
+            updateUI();
+        }
+
+        function handleDivideBoth(divisor) {
+            if (SHAPE_ORDER.every(k => leftState[k] % divisor === 0 && rightState[k] % divisor === 0)) {
+                SHAPE_ORDER.forEach(k => {
+                    leftState[k] /= divisor;
+                    rightState[k] /= divisor;
+                });
+                updateUI();
+            }
+        }
+
+        function handleLoadPreset(preset) {
+            switch (preset) {
+                case 1:
+                    leftState = { circle: 2, triangle: 0, square: 1 };
+                    rightState = { circle: 5, triangle: 0, square: 0 };
+                    break;
+                case 2:
+                    leftState = { circle: 0, triangle: 0, square: 2 };
+                    rightState = { circle: 3, triangle: 0, square: 1 };
+                    break;
+                case 3:
+                    leftState = { circle: 1, triangle: 0, square: 2 };
+                    rightState = { circle: 4, triangle: 0, square: 1 };
+                    break;
+                case 4:
+                    leftState = { circle: 3, triangle: 1, square: 0 };
+                    rightState = { circle: 5, triangle: 0, square: 0 };
+                    break;
+            }
+            updateUI();
+        }
+
+        // 초기 화면 렌더링
+        updateUI();
+
+    </script>
+</body>
+</html>
